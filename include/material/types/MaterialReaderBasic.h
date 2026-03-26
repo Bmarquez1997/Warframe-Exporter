@@ -22,7 +22,9 @@ namespace WarframeExporter::Material
                 (int)MaterialType::MATERIAL_205,
                 (int)MaterialType::MATERIAL_206,
                 (int)MaterialType::MATERIAL_208,
-                (int)MaterialType::MATERIAL_210
+                (int)MaterialType::MATERIAL_209,
+                (int)MaterialType::MATERIAL_210,
+                (int)MaterialType::MATERIAL_211
             };
 			return extTypes;
         }
