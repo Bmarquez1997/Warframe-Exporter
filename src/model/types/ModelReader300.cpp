@@ -3,7 +3,7 @@
 using namespace WarframeExporter::Model;
 
 void
-ModelReader300::readHeader(BinaryReader::BinaryReaderBuffered* headerReader, const LotusLib::CommonHeader& header, ModelHeaderExternal& outHeader)
+ModelReader300::readHeader(BinaryReader::Buffered* headerReader, const LotusLib::CommonHeader& header, ModelHeaderExternal& outHeader)
 {
     headerReader->seek(0x30, std::ios_base::cur);
 
@@ -44,7 +44,7 @@ ModelReader300::readHeader(BinaryReader::BinaryReaderBuffered* headerReader, con
 
     readBoneMaps(headerReader, outHeader.boneMaps);
 
-    outHeader.bodySkipLen2 = skipMorphStructsAndFindSkip(headerReader);
+    outHeader.bodySkipLen2 = skipMorphStructsAndFindSkip(headerReader, outHeader.meshInfos);
 
     headerReader->seek(0x2F, std::ios_base::cur);
 
@@ -71,7 +71,7 @@ ModelReader300::readHeader(BinaryReader::BinaryReaderBuffered* headerReader, con
 }
 
 void
-ModelReader300::readBody(const ModelHeaderExternal& extHeader, BinaryReader::BinaryReaderBuffered* bodyReader, ModelBodyExternal& outBody)
+ModelReader300::readBody(const ModelHeaderExternal& extHeader, BinaryReader::Buffered* bodyReaderB, BinaryReader::Buffered* bodyReaderF, ModelBodyExternal& outBody)
 {
-    ModelReader290::getInstance()->readBody(extHeader, bodyReader, outBody);
+    ModelReader290::getInstance()->readBody(extHeader, bodyReaderB, bodyReaderF, outBody);
 }

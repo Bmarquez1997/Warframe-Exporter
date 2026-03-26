@@ -22,11 +22,13 @@ namespace WarframeExporter::Material
                 (int)MaterialType::MATERIAL_205,
                 (int)MaterialType::MATERIAL_206,
                 (int)MaterialType::MATERIAL_208,
-                (int)MaterialType::MATERIAL_210
+                (int)MaterialType::MATERIAL_209,
+                (int)MaterialType::MATERIAL_210,
+                (int)MaterialType::MATERIAL_211
             };
 			return extTypes;
         }
         
-        MaterialExternal readData(BinaryReader::BinaryReaderBuffered* headerReader, const LotusLib::CommonHeader& commonHeader) override;
+        MaterialExternal readData(BinaryReader::Buffered* headerReader, const LotusLib::CommonHeader& commonHeader) override;
     };
 };

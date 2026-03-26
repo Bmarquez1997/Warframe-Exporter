@@ -18,11 +18,12 @@ namespace WarframeExporter::LevelStatic
         {
             std::vector<int> extTypes = {
                 (int)LevelStaticType::LEVELSTATIC_29,
+                (int)LevelStaticType::LEVELSTATIC_30,
             };
 			return extTypes;
         }
 
-        void readHeader(BinaryReader::BinaryReaderBuffered* headerReader, LevelStaticHeaderExternal& outHeader) override;
-        void readBody(BinaryReader::BinaryReaderBuffered* bodyReader, const LevelStaticHeaderExternal& extHeader, LevelStaticBodyExternal& outBody) override;
+        void readHeader(BinaryReader::Buffered* headerReader, LevelStaticHeaderExternal& outHeader) override;
+        void readBody(BinaryReader::Buffered* bodyReader, const LevelStaticHeaderExternal& extHeader, LevelStaticBodyExternal& outBody) override;
     };
 };

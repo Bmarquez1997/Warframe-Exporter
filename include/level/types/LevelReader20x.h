@@ -2,7 +2,7 @@
 
 #include "level/LevelStructs.h"
 #include "level/LevelReader.h"
-#include "BinaryReaderBuffered.h"
+#include "BinaryReader/Buffered.h"
 #include "ExporterExceptions.h"
 
 #include <string>
@@ -28,13 +28,15 @@ namespace WarframeExporter::Level
 		{
 			std::vector<int> extTypes = {
 				(int)LevelType::LEVEL_201,
-				(int)LevelType::LEVEL_202
+				(int)LevelType::LEVEL_202,
+				(int)LevelType::LEVEL_207,
+				(int)LevelType::LEVEL_209
 			};
 			return extTypes;
 		}
 	
-		void readHeader(BinaryReader::BinaryReaderBuffered& reader, LevelHeaderExternal& outHeader) const override;
-		void readBody(BinaryReader::BinaryReaderBuffered& reader, const LevelHeaderExternal& extHeader, LevelBodyExternal& outBody) const override;
+		void readHeader(BinaryReader::Buffered& reader, LevelHeaderExternal& outHeader) const override;
+		void readBody(BinaryReader::Buffered& reader, const LevelHeaderExternal& extHeader, LevelBodyExternal& outBody) const override;
 
 	};
 };

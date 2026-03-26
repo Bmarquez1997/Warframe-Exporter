@@ -3,7 +3,7 @@
 using namespace WarframeExporter::Model;
 
 void
-ModelConverter::convertToInternal(ModelHeaderExternal& extHeader, ModelBodyExternal& extBody, const std::string& attributes, std::vector<std::vector<glm::u8vec4>> vertexColors, ModelHeaderInternal& outHeader, ModelBodyInternal& outBody, ScaleType scaleType, const LotusLib::LotusPath& internalPath)
+ModelConverter::convertToInternal(ModelHeaderExternal& extHeader, ModelBodyExternal& extBody, const std::string& attributes, std::vector<std::vector<glm::u8vec4>> vertexColors, ModelHeaderInternal& outHeader, ModelBodyInternal& outBody, ScaleType scaleType, const std::string& internalPath)
 
 {
     if (extHeader.boneTree.size() > 1)
@@ -45,7 +45,16 @@ ModelConverter::convertInternalHeaderRigged(ModelHeaderExternal& extHeader, Mode
         
         intNodes.push_back(newNode);
     }
-    // Prevent invinite loop, by default the top-most node has parent index of 0
+
+    // MODEL_PACKED_XXX models require a bone heirarchy shift
+    if (intNodes.size() >= 2 && intNodes[1].parentIndex == 1)
+    {
+        for (BoneTreeNodeInternal& curBoneNode : intNodes)
+            curBoneNode.parentIndex--;
+    }
+
+    // Prevent infinite loop
+    // By default, the 0-index node has parent index of 0
     if (intNodes.size() > 1 && intNodes[0].parentIndex == 0)
         intNodes[0].parentIndex = -1;
     
@@ -78,7 +87,7 @@ ModelConverter::convertInternalHeaderRigged(ModelHeaderExternal& extHeader, Mode
 }
 
 void
-ModelConverter::convertInternalHeaderStaticOrRigged(ModelHeaderExternal& extHeader, const std::string& attributes, ModelHeaderInternal& outHeader, const LotusLib::LotusPath& internalPath)
+ModelConverter::convertInternalHeaderStaticOrRigged(ModelHeaderExternal& extHeader, const std::string& attributes, ModelHeaderInternal& outHeader, const std::string& internalPath)
 {
     outHeader.vertexCount = extHeader.vertexCount;
     outHeader.boneCount = extHeader.boneCount;
@@ -99,7 +108,7 @@ ModelConverter::convertInternalHeaderStaticOrRigged(ModelHeaderExternal& extHead
 
         std::string matName = x < materialNames.size() ? materialNames[x] : "None";
         if (matName[0] != '/' && matName != "None")
-            newMeshInfo.matName = (internalPath.parent_path() / matName).string();
+            newMeshInfo.matName = (std::filesystem::path(internalPath).parent_path() / matName).string();
         else
             newMeshInfo.matName = matName;
 
@@ -114,6 +123,19 @@ void
 ModelConverter::convertInternalBodyStaticOrRigged(const ModelHeaderExternal& extHeader, ModelBodyExternal& extBody, ModelBodyInternal& outBody, std::vector<std::vector<glm::u8vec4>> vertexColors, const glm::vec4& modelScale)
 {
     outBody.indices = extBody.indices;
+
+    if (extHeader.morphCount > 0)
+    {
+        // Morphs (Shape Keys) strange offets
+        for (const MeshInfoExternal& meshInfo : extHeader.meshInfos)
+        {
+            size_t indexOffset = meshInfo.faceLODOffsets[0];
+            for (size_t i = 0; i < meshInfo.faceLODCounts[0]; i++)
+            {
+                outBody.indices[indexOffset + i] += meshInfo.faceLODVertexOffsets[0];
+            }
+        }
+    }
 
     // Apply global model scale
     std::vector<glm::vec3> newPositions;

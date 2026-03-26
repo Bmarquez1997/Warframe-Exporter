@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Extractor.h"
-#include "BinaryReaderBuffered.h"
+#include "BinaryReader/Buffered.h"
 #include "material/MaterialTypes.h"
 #include "material/MaterialStructs.h"
 #include "material/MaterialEnumMap.h"
@@ -19,7 +19,7 @@ namespace WarframeExporter::Material
 		MaterialExtractor(const MaterialExtractor&) = delete;
 		MaterialExtractor operator=(const MaterialExtractor&) = delete;
 
-		inline const std::string& getOutputExtension(const LotusLib::CommonHeader& commonHeader, BinaryReader::BinaryReaderBuffered* hReader, WarframeExporter::ExtractOptions options) const override
+		inline const std::string& getOutputExtension(const LotusLib::CommonHeader& commonHeader, BinaryReader::Buffered* hReader, WarframeExporter::ExtractOptions options) const override
 		{
 			const static std::string& jsonExt = "json";
 			if (options.materialExtractMode == MaterialExtractType::JSON)
@@ -55,10 +55,13 @@ namespace WarframeExporter::Material
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_205 },
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_206 },
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_208 },
+				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_209 },
 				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_208 },
 				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_210 },
+				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_211 },
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_214 },
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_216 },
+				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_217 },
 				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_216 }
 			};
 			return extTypes;
@@ -66,8 +69,8 @@ namespace WarframeExporter::Material
 
 		static MaterialExtractor* getInstance();
 
-		MaterialExternal getExternalMaterial(BinaryReader::BinaryReaderBuffered* headerReader, const LotusLib::CommonHeader& commonHeader);
+		MaterialExternal getExternalMaterial(BinaryReader::Buffered* headerReader, const LotusLib::CommonHeader& commonHeader);
 		void writeOut(const MaterialInternal& materialInternal, const std::filesystem::path& outputPath, ExtractOptions options);
-		void extract(LotusLib::FileEntry& fileEntry, LotusLib::PackagesReader& pkgs, const std::filesystem::path& outputPath, ExtractOptions options) override;
+		void extract(LotusLib::FileEntry& fileEntry, const LotusLib::PackageCollection& pkgs, const LotusLib::PackagesBin& pkgsBin, const std::filesystem::path& outputPath, const ExtractOptions options) override;
 	};
 }

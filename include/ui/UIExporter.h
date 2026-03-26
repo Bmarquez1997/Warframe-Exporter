@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <optional>
 
 #include <QtWidgets/QTreeWidget>
 #include <QtGui/QBrush>
@@ -9,11 +10,11 @@
 #include <QTimer>
 #include <QHash>
 #include <QSet>
+#include <QRegularExpression>
+#include <QShortcut>
 
-#include "LotusLib.h"
 #include "Extractor.h"
-#include "LotusPath.h"
-#include "ExtractOptions.h"
+#include "Enums.h"
 
 #include "ui/UIMainWindow.h"
 #include "ui/ui_Exporter.h"
@@ -32,7 +33,8 @@ class UiExporter : public QObject, private Ui_MainWindow
 {
     Q_OBJECT
 
-    LotusLib::PackagesReader m_packages;
+    std::optional<LotusLib::PackageCollection> m_packages;
+    LotusLib::PackagesBin m_packagesBin;
     std::filesystem::path m_cacheDirPath;
     std::filesystem::path m_exportPath;
     WarframeExporter::ExtractorType m_extractTypes;
@@ -56,14 +58,15 @@ public:
     void setup(UiMainWindow* MainWindow);
 
 private:
+    void setupShortcuts(UiMainWindow* MainWindow);
     void saveGeometry();
     void loadGeometry();
 
     void clearPreview();
     void setPreview(TreeItemFile* file);
 
-    void extractDirectory(LotusLib::LotusPath internalPath);
-    void extractFile(LotusLib::LotusPath internalPath, const std::string& pkgName);
+    void extractDirectory(std::string internalPath);
+    void extractFile(std::string internalPath, const std::string& pkgName);
 
     void swapToExtractButton();
     void swapToCancelButton();
@@ -85,7 +88,7 @@ public slots:
     void extractStart(int totalItems);
     void extractItemComplete(int curItemCount);
     void extractError(std::string msg);
-    void extractComplete();
+    void extractComplete(int totalItems);
     void onSearchTextChanged(const QString& text);
     void filterTree();
     void buildSearchIndex(QTreeWidgetItem* parent);

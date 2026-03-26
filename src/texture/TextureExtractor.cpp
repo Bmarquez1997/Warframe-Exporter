@@ -10,12 +10,12 @@ TextureExtractor::getInstance()
 }
 
 TextureInternal
-TextureExtractor::getTexture(LotusLib::FileEntry& fileEntry, LotusLib::PackagesReader& pkgs)
+TextureExtractor::getTexture(LotusLib::FileEntry& fileEntry, const LotusLib::PackageCollection& pkgs)
 {
 	// Typically, textures above 256x256 are in F. Textures below are in B
-	BinaryReader::BinaryReaderBuffered& entry = fileEntry.fData.getLength() != 0 ? fileEntry.fData : fileEntry.bData;
+	BinaryReader::Buffered& entry = fileEntry.footer.getLength() != 0 ? fileEntry.footer : fileEntry.body;
 
-	TextureHeaderExternal extHeader = TextureReader::readHeader(&fileEntry.headerData, fileEntry.commonHeader);
+	TextureHeaderExternal extHeader = TextureReader::readHeader(&fileEntry.header, fileEntry.commonHeader);
 
 	if (internalFormatToDdsFormat.count(static_cast<TextureCompression>(extHeader.format)) == 0)
 		throw std::runtime_error("Unknown texture compression format: " + std::to_string(extHeader.format));
@@ -45,7 +45,7 @@ TextureExtractor::writeData(TextureInternal& texture, const LotusLib::CommonHead
 }
 
 void
-TextureExtractor::extract(LotusLib::FileEntry& fileEntry, LotusLib::PackagesReader& pkgs, const std::filesystem::path& outputPath, ExtractOptions options)
+TextureExtractor::extract(LotusLib::FileEntry& fileEntry, const LotusLib::PackageCollection& pkgs, const LotusLib::PackagesBin& pkgsBin, const std::filesystem::path& outputPath, const ExtractOptions options)
 {
 	TextureInternal intTexture = getTexture(fileEntry, pkgs);
 	if (!options.dryRun)
@@ -80,14 +80,27 @@ TextureExtractor::writeTextureToFile(TextureInternal& texture, const LotusLib::C
 
 		out.write(data, dataLen);
 		out.close();
+
+		return;
 	}
 
-	else if (texture.header.formatEnum == TextureCompression::BC6)
-		TextureExporterConvert::convertAndWriteToHdr(data, dataLen, outputFile, texture.header.width, texture.header.height);
+	const char* dataFormatted = data;
+
+	std::vector<char> dataFormattedVec;
+	if (texture.header.formatEnum == TextureCompression::Uncompressed)
+	{
+		dataFormattedVec.resize(dataLen);
+		memcpy(dataFormattedVec.data(), data, dataLen);
+		TextureConverter::flipTextureChannels(dataFormattedVec.data(), dataLen);
+		dataFormatted = dataFormattedVec.data();
+	}
+
+	if (texture.header.formatEnum == TextureCompression::BC6)
+		TextureExporterConvert::convertAndWriteToHdr(dataFormatted, dataLen, outputFile, texture.header.width, texture.header.height);
 
 	else if (exportType == TextureExportType::TEXTURE_EXPORT_PNG)
-		TextureExporterConvert::convertAndWriteToPng(data, dataLen, outputFile, texture.header.formatEnum, texture.header.width, texture.header.height);
+		TextureExporterConvert::convertAndWriteToPng(dataFormatted, dataLen, outputFile, texture.header.formatEnum, texture.header.width, texture.header.height);
 
 	else if (exportType == TextureExportType::TEXTURE_EXPORT_TGA)
-		TextureExporterConvert::convertAndWriteToTga(data, dataLen, outputFile, texture.header.formatEnum, texture.header.width, texture.header.height);
+		TextureExporterConvert::convertAndWriteToTga(dataFormatted, dataLen, outputFile, texture.header.formatEnum, texture.header.width, texture.header.height);
 }

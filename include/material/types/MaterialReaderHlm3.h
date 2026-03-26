@@ -18,11 +18,12 @@ namespace WarframeExporter::Material
         {
             std::vector<int> extTypes = {
                 (int)MaterialType::MATERIAL_214,
-                (int)MaterialType::MATERIAL_216
+                (int)MaterialType::MATERIAL_216,
+                (int)MaterialType::MATERIAL_217
             };
 			return extTypes;
         }
 
-        MaterialExternal readData(BinaryReader::BinaryReaderBuffered* headerReader, const LotusLib::CommonHeader& commonHeader) override;
+        MaterialExternal readData(BinaryReader::Buffered* headerReader, const LotusLib::CommonHeader& commonHeader) override;
     };
 };

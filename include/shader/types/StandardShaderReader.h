@@ -18,12 +18,13 @@ namespace WarframeExporter::Shader
                 (int)ShaderType::SHADER_21,
                 (int)ShaderType::SHADER_23,
                 (int)ShaderType::SHADER_26,
+                (int)ShaderType::SHADER_29,
             };
 			return extTypes;
 		}
 
-        ShaderHeaderExternal readHeader(BinaryReader::BinaryReaderBuffered* headerReader, int shaderTypeEnum) override;
-        ShaderEntry readShader(BinaryReader::BinaryReaderBuffered* bodyReader, const ShaderHeaderExternal& shaderHeader, int index) override;
-        std::vector<ShaderEntry> readAllShaders(BinaryReader::BinaryReaderBuffered* bodyReader, const ShaderHeaderExternal& shaderHeader) override;
+        ShaderHeaderExternal readHeader(BinaryReader::Buffered* headerReader, int shaderTypeEnum) override;
+        ShaderEntry readShader(BinaryReader::Buffered* bodyReader, const ShaderHeaderExternal& shaderHeader, int index) override;
+        std::vector<ShaderEntry> readAllShaders(BinaryReader::Buffered* bodyReader, const ShaderHeaderExternal& shaderHeader) override;
     };
 };

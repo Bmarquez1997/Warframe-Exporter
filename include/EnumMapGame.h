@@ -1,6 +1,7 @@
 #pragma once
 
-#include "LotusLib.h"
+#include "LotusLib/Enums.h"
+#include "LotusLib/Utils.h"
 
 #include <map>
 #include <stdexcept>
@@ -39,7 +40,7 @@ namespace WarframeExporter
 				if (m_enumMap[game].find(type) == m_enumMap[game].end())
 					m_enumMap[game][type] = cls;
 				else
-					throw std::out_of_range("EnumMapGame key already exists");
+					throw std::out_of_range("EnumMapGame key already exists " + LotusLib::gameToString(game) + "/" + std::to_string(type));
 			}
 			return *this;
 		}

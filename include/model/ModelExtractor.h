@@ -1,12 +1,14 @@
 #pragma once
 
 #include "../Extractor.h"
+#include "LotusLib/CommonHeader.h"
 #include "ModelConverter.h"
 #include "ModelExporterGltf.h"
-#include "BinaryReaderBuffered.h"
+#include "BinaryReader/Buffered.h"
 #include "ModelStructs.hpp"
 #include "model/ModelEnumMap.h"
 #include "ExporterExceptions.h"
+#include "model/ModelTypes.h"
 #include "model/vertexcolor/VertexColorIndexer.h"
 
 #include <iostream>
@@ -23,7 +25,7 @@ namespace WarframeExporter::Model
 		ModelExtractor(const ModelExtractor&) = delete;
 		ModelExtractor operator=(const ModelExtractor&) = delete;
 
-		inline const std::string& getOutputExtension(const LotusLib::CommonHeader& commonHeader, BinaryReader::BinaryReaderBuffered* hReader, WarframeExporter::ExtractOptions options) const override
+		inline const std::string& getOutputExtension(const LotusLib::CommonHeader& commonHeader, BinaryReader::Buffered* hReader, WarframeExporter::ExtractOptions options) const override
 		{
 			static std::string outFileExt = "glb";
 			return outFileExt;
@@ -51,38 +53,64 @@ namespace WarframeExporter::Model
 			std::vector<std::tuple<LotusLib::Game, LotusLib::PackageCategory, int>> extTypes = {
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_STATIC_86 },
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_STATIC_96 },
-				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_LEVEL_99 },
-				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_LEVEL_99 },
-				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_DCM_101 },
-				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_HLOD_OR_DCM_102 },
-				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_LEVEL_103 },
+				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_LEVEL1_99 },
+				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_LEVEL1_99 },
+				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelDCMType::MODEL_DCM_101 },
+				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, 102 }, // Shared by DCM/HLOD/Model
+				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_STATIC_102 },
+				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_LEVEL2_103 },
+				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, 105 }, // Shared by DCM/HLOD
+				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, 105 }, // Shared by DCM/HLOD
 				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_LEVEL_106 },
-				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_HLOD_OR_DCM_105 },
+				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, 108 }, // Shared by DCM/HLOD
+				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, 108 }, // Shared by DCM/HLOD/SM
+				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_LEVEL2_109 },
+				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_LEVEL2_109 },
+				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)111 }, // Shared by DCM/HLOD
+				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_LEVEL2_112 },
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_TERRAIN_159 },
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_TERRAIN_160 },
 				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_TERRAIN_163 },
+				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_TERRAIN_166 },
+				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_TERRAIN_166 },
+				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_TERRAIN_169 },
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_RIGGED_269 },
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_RIGGED_272 },
 				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_RIGGED_275 },
 				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_RIGGED_277 },
 				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_RIGGED_278 },
+				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_RIGGED_281 },
+				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_RIGGED_283 },
+				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_RIGGED_287 },
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_PACKED_289 },
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_PACKED_290 },
+				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_PACKED_299 },
 				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_PACKED_300 },
 				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_PACKED_301 },
-
+				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_PACKED_310 },
+				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)ModelType::MODEL_PACKED_314 },
 			};
 			return extTypes;
 		}
 
 		static ModelExtractor* getInstance();
 
-		void indexVertexColors(LotusLib::PackageReader& pkgs);
+		void indexVertexColors(LotusLib::Package& pkgs);
 		void cancelVertexColorIndexing();
 
-		void extractExternal(LotusLib::FileEntry& fileEntry, LotusLib::Game game, ModelHeaderExternal& outHeaderExt, ModelBodyExternal& outBodyExt);
-		std::vector<std::vector<glm::u8vec4>> getVertexColors(const LotusLib::LotusPath& modelPath, LotusLib::PackageReader& pkg, bool indexVertexColors);
+		ModelReader* getModelReader(const std::string& internalPath, uint32_t type, LotusLib::Game game);
+		void extractExternal(
+			ModelReader* modelReader,
+			LotusLib::CommonHeader& commonHeader,
+			BinaryReader::Buffered* headerReader,
+			BinaryReader::Buffered* bodyReader,
+			BinaryReader::Buffered* footerReader,
+			LotusLib::Game game,
+			ModelHeaderExternal& outHeaderExt,
+			ModelBodyExternal& outBodyExt
+		);
+		std::vector<std::vector<glm::u8vec4>> getVertexColors(const std::string& modelPath, LotusLib::Package& pkg, bool indexVertexColors);
 
-		void extract(LotusLib::FileEntry& fileEntry, LotusLib::PackagesReader& pkgs, const std::filesystem::path& outputPath, ExtractOptions options) override;
+		void extract(LotusLib::FileEntry& fileEntry, const LotusLib::PackageCollection& pkgs, const LotusLib::PackagesBin& pkgsBin, const std::filesystem::path& outputPath, const ExtractOptions options) override;
 	};
 }

@@ -3,7 +3,7 @@
 using namespace WarframeExporter::Model;
 
 void
-ModelReader::readWeightedBones(BinaryReader::BinaryReaderBuffered* reader, std::vector<std::string>& outWeightedBones)
+ModelReader::readWeightedBones(BinaryReader::Buffered* reader, std::vector<std::string>& outWeightedBones)
 {
     uint32_t weightedBoneCount = reader->readUInt32(0, 500, "Too many weighted bones");
     for (uint32_t x = 0; x < weightedBoneCount; x++)
@@ -14,7 +14,7 @@ ModelReader::readWeightedBones(BinaryReader::BinaryReaderBuffered* reader, std::
 }
 
 void
-ModelReader::readBoneTree(BinaryReader::BinaryReaderBuffered* reader, std::vector<BoneTreeNodeExternal>& outBoneTree)
+ModelReader::readBoneTree(BinaryReader::Buffered* reader, std::vector<BoneTreeNodeExternal>& outBoneTree)
 {
     uint32_t boneTreeLen = reader->readUInt32(0, 500, "Too many items in Bone Tree");
     outBoneTree.resize(boneTreeLen);
@@ -32,7 +32,7 @@ ModelReader::readBoneTree(BinaryReader::BinaryReaderBuffered* reader, std::vecto
 }
 
 void
-ModelReader::readBoneMaps(BinaryReader::BinaryReaderBuffered* reader, std::vector<std::vector<uint32_t>>& outBoneMaps)
+ModelReader::readBoneMaps(BinaryReader::Buffered* reader, std::vector<std::vector<uint32_t>>& outBoneMaps)
 {
     uint32_t boneMapCount = reader->readUInt32(0, 500, "Too many Bone Maps");
     outBoneMaps.resize(boneMapCount);
@@ -50,7 +50,7 @@ ModelReader::readBoneMaps(BinaryReader::BinaryReaderBuffered* reader, std::vecto
 }
 
 void
-ModelReader::readMeshInfos(BinaryReader::BinaryReaderBuffered* reader, std::vector<MeshInfoExternal>& outMeshInfos)
+ModelReader::readMeshInfos(BinaryReader::Buffered* reader, std::vector<MeshInfoExternal>& outMeshInfos)
 {
     uint32_t meshInfoCount = reader->readUInt32(0, 50, "Too many meshinfos");
     
@@ -76,7 +76,7 @@ ModelReader::readMeshInfos(BinaryReader::BinaryReaderBuffered* reader, std::vect
 }
 
 void
-ModelReader::readMaterialPaths(BinaryReader::BinaryReaderBuffered* reader, std::vector<std::string>& outMaterialpaths)
+ModelReader::readMaterialPaths(BinaryReader::Buffered* reader, std::vector<std::string>& outMaterialpaths)
 {
     uint32_t materialPathArrayLen = reader->readUInt32(0, 100, "Too many materials");
 
@@ -88,7 +88,7 @@ ModelReader::readMaterialPaths(BinaryReader::BinaryReaderBuffered* reader, std::
 }
 
 void
-ModelReader::readPhysxMeshes(BinaryReader::BinaryReaderBuffered* reader, std::vector<PhysXMesh>& outPhysxMeshes)
+ModelReader::readPhysxMeshes(BinaryReader::Buffered* reader, std::vector<PhysXMesh>& outPhysxMeshes)
 {
     uint32_t physXMeshCount = reader->readUInt32(0, 300, "Too many PhysX Meshes");
     outPhysxMeshes.resize(physXMeshCount);
@@ -119,7 +119,7 @@ ModelReader::readPhysxMeshes(BinaryReader::BinaryReaderBuffered* reader, std::ve
 }
 
 void
-ModelReader::readErrors(BinaryReader::BinaryReaderBuffered* reader, std::vector<std::string>& outErrors)
+ModelReader::readErrors(BinaryReader::Buffered* reader, std::vector<std::string>& outErrors)
 {
     uint32_t errorCount = reader->readUInt32();
     outErrors.resize(errorCount);
@@ -132,7 +132,7 @@ ModelReader::readErrors(BinaryReader::BinaryReaderBuffered* reader, std::vector<
 }
 
 void
-ModelReader::skipUnknownVector(BinaryReader::BinaryReaderBuffered* reader)
+ModelReader::skipUnknownVector(BinaryReader::Buffered* reader)
 {
     // I really don't know
     uint16_t vecCheck = reader->readUInt16();
@@ -141,21 +141,21 @@ ModelReader::skipUnknownVector(BinaryReader::BinaryReaderBuffered* reader)
 }
 
 void
-ModelReader::skipUnk16Array(BinaryReader::BinaryReaderBuffered* reader)
+ModelReader::skipUnk16Array(BinaryReader::Buffered* reader)
 {
     uint32_t unkShortLen = reader->readUInt32(0, 30, "Too many UnkShort values");
     reader->seek(unkShortLen * 2, std::ios_base::cur);
 }
 
 void
-ModelReader::skipUnk64Array(BinaryReader::BinaryReaderBuffered* reader)
+ModelReader::skipUnk64Array(BinaryReader::Buffered* reader)
 {
     uint32_t uint64LODUnkLen = reader->readUInt32(0, 10, "Too many Unk64 values");
     reader->seek(uint64LODUnkLen * 8U, std::ios_base::cur);
 }
 
 uint32_t
-ModelReader::skipUnknownStructs(BinaryReader::BinaryReaderBuffered* reader)
+ModelReader::skipUnknownStructs(BinaryReader::Buffered* reader)
 {
     uint32_t unkStructCount = reader->readUInt32();
     for (uint32_t x = 0; x < unkStructCount; x++)
@@ -170,7 +170,7 @@ ModelReader::skipUnknownStructs(BinaryReader::BinaryReaderBuffered* reader)
 }
 
 void
-ModelReader::skipMorphs(BinaryReader::BinaryReaderBuffered* reader)
+ModelReader::skipMorphs(BinaryReader::Buffered* reader)
 {
     uint32_t morphArrCount = reader->readUInt32();
     for (uint32_t x = 0; x < morphArrCount; x++)
@@ -182,49 +182,55 @@ ModelReader::skipMorphs(BinaryReader::BinaryReaderBuffered* reader)
 }
 
 uint32_t
-ModelReader::skipMorphStructsAndFindSkip(BinaryReader::BinaryReaderBuffered* reader)
+ModelReader::skipMorphStructsAndFindSkip(BinaryReader::Buffered* reader, std::vector<MeshInfoExternal>& outMeshInfos)
 {
-    // Specifications:
-    //   - Last in the following array
-    //   - Third in the repeating array
-    //   - Second value in the array. (technically 2, 3, and 4th index are the same)
-    uint32_t skipLen = 0;
+    uint32_t totalSkip = 0;
 
     uint32_t morphStructArrayCount = reader->readUInt32();
-    for (uint32_t x = 0; x < morphStructArrayCount; x++)
+    if (morphStructArrayCount > 0 && morphStructArrayCount != outMeshInfos.size())
+        throw unknown_format_error("Morph Struct array count != meshinfo count (" + std::to_string(morphStructArrayCount) + " != " + std::to_string(outMeshInfos.size()) + ")");
+
+    for (uint32_t iMorphStruct = 0; iMorphStruct < morphStructArrayCount; iMorphStruct++)
     {
-        for (int y = 0; y < 4; y++)
-        {
-            if (y == 2)
-            {
-                uint32_t recurringUnkSubArr = reader->readUInt32();
-                reader->seek(4, std::ios_base::cur);
-                skipLen = reader->readUInt32();
-                reader->seek(4U * (recurringUnkSubArr - 2), std::ios_base::cur);
-            }
-            else
-            {
-                uint32_t recurringUnkSubArr = reader->readUInt32();
-                reader->seek(4U * recurringUnkSubArr, std::ios_base::cur);
-            }
-        }
+        MeshInfoExternal& curMeshInfo = outMeshInfos[iMorphStruct];
 
-        uint32_t morphNameArrCount = reader->readUInt32();
-        for (uint32_t x = 0; x < morphNameArrCount; x++)
-        {
-            uint32_t morphNameLen = reader->readUInt32();
-            reader->seek(morphNameLen, std::ios_base::cur);
-        }
+        // 4 arrays of 5 integers each
+        // 1st: Length Multipliers
+        // 2nd: Vertex Offsets
+        // 3rd: Face offsets?
+        // 4th: ???
+        reader->readUInt32(5, 5, "MorphStruct 1st 5");
+        uint32_t lengthMult = reader->readUInt32();
+        reader->seek(16, std::ios::cur);
 
-        uint32_t unkArrCount = reader->readUInt32();
-        reader->seek(unkArrCount * 4U, std::ios_base::cur);
+        reader->readUInt32(5, 5, "MorphStruct 2nd 5");
+        reader->readUInt32Array(&curMeshInfo.faceLODVertexOffsets[0], 5);
+
+        reader->readUInt32(5, 5, "MorphStruct 3rd 5");
+        reader->seek(20, std::ios::cur);
+
+        reader->readUInt32(5, 5, "MorphStruct 4th 5");
+        uint32_t lengthBase = reader->readUInt32();
+        reader->seek(16, std::ios::cur);
+
+        totalSkip += lengthBase * std::max(1u, lengthMult);
+        
+        int morphNameArrayLen = reader->readUInt32(1, 30, "Morph name array len");
+        for (uint32_t iMorphName = 0; iMorphName < morphNameArrayLen; iMorphName++)
+        {
+            int morphNameLen = reader->readUInt32(1, 80, "Morph name");
+            reader->seek(morphNameLen, std::ios::cur);
+        }
+        
+        int unkArrayCount = reader->readUInt32(0, 30, "Morph unk array count34");
+        reader->seek(unkArrayCount * 4, std::ios::cur);
     }
-    
-    return skipLen;
+
+    return totalSkip;
 }
 
 void
-ModelReader::skipPhysicsStruct(BinaryReader::BinaryReaderBuffered* reader)
+ModelReader::skipPhysicsStruct(BinaryReader::Buffered* reader)
 {
     uint32_t type = reader->readUInt32();
     uint32_t subType = reader->readUInt32();
@@ -236,8 +242,21 @@ ModelReader::skipPhysicsStruct(BinaryReader::BinaryReaderBuffered* reader)
     reader->seek(pathLen, std::ios::cur);
 }
 
+void
+ModelReader::skipPhysicsStruct2(BinaryReader::Buffered* reader)
+{
+    uint32_t type = reader->readUInt32();
+    uint32_t subType = reader->readUInt32();
+
+    if (type == 8 || subType == 8)
+        reader->seek(2, std::ios::cur);
+
+    uint32_t pathLen = reader->readUInt32();
+    reader->seek(pathLen, std::ios::cur);
+}
+
 bool
-ModelReader::canContinueReading(BinaryReader::BinaryReaderBuffered* reader, int vertexIndexCount)
+ModelReader::canContinueReading(BinaryReader::Buffered* reader, int vertexIndexCount)
 {
     int remainingBytes = reader->getLength() - reader->tell();
     if ((vertexIndexCount * 2) > remainingBytes)

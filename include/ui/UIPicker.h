@@ -8,14 +8,14 @@
 #include "Meta.h"
 #include "shader/ShaderExportType.h"
 #include "texture/TextureExportTypes.h"
-#include "ExtractOptions.h"
-#include "LotusUtils.h"
+#include "Enums.h"
 
 #include <QtWidgets/qdialog.h>
 #include <QtWidgets/qmainwindow.h>
 #include <QtWidgets/QMessageBox>
 #include <QtCore/qtmetamacros.h>
 #include <QtWidgets/qfiledialog.h>
+#include <QShortcut>
 
 class UiPicker : public QObject, private Ui_WindowPicker
 {
@@ -25,8 +25,6 @@ class UiPicker : public QObject, private Ui_WindowPicker
     Ui_AdditionalSettings m_additionalSettings;
 
     QMessageBox m_chosenGameMessage;
-    QMessageBox m_invalidCacheFolderBox;
-    QMessageBox m_invalidExportFolderBox;
 
 public:
     UiPicker(QObject *parent = nullptr);
@@ -37,9 +35,9 @@ public:
     void loadSettings();
 
 private:
-    void setupMessageBoxes();
     void addComboBoxOptions();
     void loadVersion();
+    bool createExportFolder();
     void cachePathUpdated(const QString& newPath);
 
 signals:
@@ -50,11 +48,9 @@ signals:
         LotusLib::Game game,
         WarframeExporter::ExtractOptions options
     );
-    void retryLoadPickerOptions();
 
 public slots:
     void parsePickerOptions();
     void browseCacheWindows();
     void browseExportPath();
-    void createExportFolderAndLoad(QAbstractButton *button);
 };

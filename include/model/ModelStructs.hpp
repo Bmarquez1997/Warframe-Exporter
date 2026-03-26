@@ -32,6 +32,7 @@ namespace WarframeExporter::Model
 		glm::vec4 vector2;
 		std::array<uint32_t, 5> faceLODOffsets;
 		std::array<uint32_t, 5> faceLODCounts;
+		std::array<uint32_t, 5> faceLODVertexOffsets;
 	};
 
 	struct PhysXMesh
@@ -50,6 +51,9 @@ namespace WarframeExporter::Model
 		uint32_t boneCount;
 		uint32_t faceCount;
 		uint32_t morphCount;
+		// After Warframe Update 40 (Vallis Undermind) vertices are split between B and F cache
+		uint32_t vertexCountB;
+		uint32_t faceCountB;
 		glm::vec4 ensmallening1;
 		glm::vec4 ensmallening2;
 		// 2 "free use" variables for skipping data

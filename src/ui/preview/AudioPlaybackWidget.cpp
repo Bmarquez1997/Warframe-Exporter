@@ -32,26 +32,26 @@ AudioPlaybackWidget::connectToWidgets(QSlider* timelineSlider, QLabel* timelineT
 void
 AudioPlaybackWidget::unloadAudio()
 {
-    if (m_mediaPlayer.isPlaying())
+    if (m_mediaPlayer.playbackState() == QMediaPlayer::PlayingState)
         m_mediaPlayer.stop();
     m_audioData = nullptr;
     m_audioDataBuffer = nullptr;
 }
 
 void
-AudioPlaybackWidget::loadAudio(LotusLib::FileEntry& fileEntry, LotusLib::PackagesReader& pkgs)
+AudioPlaybackWidget::loadAudio(LotusLib::FileEntry& fileEntry, const LotusLib::PackageCollection& pkgs, const LotusLib::PackagesBin& pkgsBin)
 {
     membuf<> memoryBuffer;
     std::ostream extractedFile(&memoryBuffer);
     // TODO: Add this `extract` signature to base extractor class as abstract method
-    switch (WarframeExporter::Audio::AudioExtractorProxy::getInstance()->peekCompressionFormat(&fileEntry.headerData))
+    switch (WarframeExporter::Audio::AudioExtractorProxy::getInstance()->peekCompressionFormat(&fileEntry.header))
     {
         case (WarframeExporter::Audio::AudioCompression::ADPCM):
         case (WarframeExporter::Audio::AudioCompression::PCM):
-            WarframeExporter::Audio::AudioPCMExtractor::getInstance()->extract(fileEntry, pkgs, extractedFile, {});
+            WarframeExporter::Audio::AudioPCMExtractor::getInstance()->extract(fileEntry, pkgs, pkgsBin, extractedFile, {});
             break;
         case (WarframeExporter::Audio::AudioCompression::OPUS):
-            WarframeExporter::Audio::AudioOpusExtractor::getInstance()->extract(fileEntry, pkgs, extractedFile, {});
+            WarframeExporter::Audio::AudioOpusExtractor::getInstance()->extract(fileEntry, pkgs, pkgsBin, extractedFile, {});
     }
 
     m_audioData = std::make_unique<QByteArray>((char*)memoryBuffer.get_memptr(), memoryBuffer.get_size());
@@ -99,7 +99,7 @@ AudioPlaybackWidget::buttonClickedReplay()
 void
 AudioPlaybackWidget::timelineSliderPressed()
 {
-    if (m_mediaPlayer.isPlaying())
+    if (m_mediaPlayer.playbackState() == QMediaPlayer::PlayingState)
     {
         m_mediaWasPlayingBeforeSliderDragEvent = true;
         m_mediaPlayer.pause();
@@ -134,4 +134,10 @@ void
 AudioPlaybackWidget::setVolume(int value)
 {
     m_audioOutput.setVolume(std::pow((value / 100.0), 3));
+}
+
+bool
+AudioPlaybackWidget::isPlaying()
+{
+    return m_mediaPlayer.playbackState() == QMediaPlayer::PlayingState;
 }

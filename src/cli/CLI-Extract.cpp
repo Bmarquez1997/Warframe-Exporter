@@ -13,6 +13,8 @@ CLIExtract::CLIExtract()
 	m_extShaderCmd = std::make_shared<TCLAP::SwitchArg>("", "extract-shaders", "Extract shaders", false);
 	m_extLandscape = std::make_shared<TCLAP::SwitchArg>("", "extract-landscapes", "Extract landscapes", false);
 	m_extLevelStatic = std::make_shared<TCLAP::SwitchArg>("", "extract-levelstatic", "Extract static levels", false);
+	m_extIcon = std::make_shared<TCLAP::SwitchArg>("", "extract-icons", "Extract icons", false);
+	m_dumpPkgs = std::make_shared<TCLAP::SwitchArg>("", "dump-pkgs", "Dump the contents of Packages.bin", false);
 
 	m_includeVertexColors = std::make_shared<TCLAP::SwitchArg>("", "vertex-colors", "Include Vertex Colors on 3D models", false);
 	m_shaderExportType = std::make_shared<TCLAP::ValueArg<std::string>>("", "shader-format", "Shader export format", false, "Binary", "Binary | Decompiled");
@@ -54,7 +56,9 @@ CLIExtract::addMainCmds(TCLAP::OneOf& oneOfCmd)
 		.add(m_extAllCmd.get())
 		.add(m_extShaderCmd.get())
 		.add(m_extLandscape.get())
-		.add(m_extLevelStatic.get());
+		.add(m_extLevelStatic.get())
+		.add(m_extIcon.get())
+		.add(m_dumpPkgs.get());
 }
 
 void
@@ -69,9 +73,20 @@ CLIExtract::addMiscCmds(TCLAP::CmdLine& cmdLine)
 }
  
 void
-CLIExtract::processCmd(const std::filesystem::path& outPath, const LotusLib::LotusPath& internalPath, const std::string& pkg, const std::filesystem::path& cacheDirPath, LotusLib::Game game)
+CLIExtract::processCmd(const std::filesystem::path& outPath, const std::string& internalPath, const std::string& pkg, const std::filesystem::path& cacheDirPath, LotusLib::Game game)
 {
-	if (!m_extAnimCmd->getValue() && !m_extLevelStatic->getValue() && !m_extLandscape->getValue() && !m_extShaderCmd->getValue() && !m_extTextCmd->getValue() && !m_extModelCmd->getValue() && !m_extMatCmd->getValue() && !m_extAudioCmd->getValue() && !m_extLevelCmd->getValue() && !m_extAllCmd->getValue())
+	if (m_dumpPkgs->getValue())
+	{
+		if (internalPath != "/")
+		{
+			WarframeExporter::Logger::getInstance().error("--internal-path doesn't work with --dump-pkgs");
+			exit(1);
+		}
+		bool success = dumpPkgsBin(cacheDirPath, outPath, game);
+		exit(success ? 0 : 1);
+	}
+
+	if (!m_extAnimCmd->getValue() && !m_extIcon->getValue() && !m_extLevelStatic->getValue() && !m_extLandscape->getValue() && !m_extShaderCmd->getValue() && !m_extTextCmd->getValue() && !m_extModelCmd->getValue() && !m_extMatCmd->getValue() && !m_extAudioCmd->getValue() && !m_extLevelCmd->getValue() && !m_extAllCmd->getValue())
 		return;
 
 	WarframeExporter::ExtractOptions options;
@@ -102,6 +117,8 @@ CLIExtract::processCmd(const std::filesystem::path& outPath, const LotusLib::Lot
 		types |= (int)WarframeExporter::ExtractorType::Landscape;
 	if (m_extLevelStatic->getValue() || m_extAllCmd->getValue())
 		types |= (int)WarframeExporter::ExtractorType::LevelStatic;
+	if (m_extIcon->getValue() || m_extAllCmd->getValue())
+		types |= (int)WarframeExporter::ExtractorType::Icon;
 
 	// Debug information
 	WarframeExporter::Logger::getInstance().debug("Type Flags: " + std::to_string(types));
@@ -181,41 +198,57 @@ CLIExtract::checkOutputDir(const std::string& outPath)
 }
 
 void
-CLIExtract::extract(const std::filesystem::path& cacheDirPath, const LotusLib::LotusPath& intPath, const std::filesystem::path outPath, WarframeExporter::ExtractorType types, LotusLib::Game game, WarframeExporter::ExtractOptions options)
+CLIExtract::extract(const std::filesystem::path& cacheDirPath, const std::string& intPath, const std::filesystem::path outPath, WarframeExporter::ExtractorType types, LotusLib::Game game, WarframeExporter::ExtractOptions options)
 {
-	WarframeExporter::BatchIteratorExport extractor;
-	LotusLib::PackagesReader pkgs(cacheDirPath, game);
+	LotusLib::PackageCollection pkgs(cacheDirPath, game);
 
-	if (tryExtractFile(pkgs, intPath, outPath, types, game, options))
+	LotusLib::PackagesBin pkgsBin;
+	auto pkgsBinData = pkgs.getFile("Misc", LotusLib::PkgSplitType::HEADER, "/Packages.bin");
+	pkgsBin.initilize(pkgsBinData);
+
+	if (WarframeExporter::tryExtractFile(pkgs, pkgsBin, intPath, outPath, types, options))
 		return;
-	extractor.batchIterate(pkgs, outPath, intPath, types, game, options);
+	WarframeExporter::extractAllFiles(pkgs, pkgsBin, outPath, intPath, types, options);
 }
 
 bool
-CLIExtract::tryExtractFile(LotusLib::PackagesReader& pkgs, const LotusLib::LotusPath& intPath, const std::filesystem::path outPath, WarframeExporter::ExtractorType types, LotusLib::Game game, WarframeExporter::ExtractOptions options)
+CLIExtract::dumpPkgsBin(const std::filesystem::path& cacheDirPath, const std::filesystem::path outPath, LotusLib::Game game)
 {
-	LotusLib::PackageCategory pkgCategory = WarframeExporter::g_enumMapExtractor.getPkgCategories(game, types);
-	for (std::string& curPkgName : pkgs)
-	{
-		std::optional<LotusLib::PackageReader> curPkg = pkgs.getPackage(curPkgName);
-
-		if (((int)curPkg->getPkgCategory() & (int)pkgCategory) == 0)
-		{
-			// Package not needed by specified extractors
-			continue;
-		}
-
-		try
-		{
-			const LotusLib::FileEntries::FileNode* fileNode = (*curPkg).getFileNode(intPath);
-			WarframeExporter::extractFile(pkgs, curPkgName, fileNode, outPath, game, options);
-			return true;
-		}
-		catch (std::exception&)
-		{
-			continue;
-		}
-	}
+	WarframeExporter::Logger& logger = WarframeExporter::Logger::getInstance();
 	
-	return false;
+	LotusLib::PackageCollection pkgs(cacheDirPath, game);
+	LotusLib::PackagesBin pkgsBin;
+
+	try
+	{
+		auto pkgsBinData = pkgs.getFile("Misc", LotusLib::PkgSplitType::HEADER, "/Packages.bin");
+		pkgsBin.initilize(pkgsBinData);
+	}
+	catch (LotusLib::LotusException& ex)
+	{
+		logger.error("Error reading Packages.bin, cannot continue");
+		logger.error(ex.what());
+		return false;
+	}
+
+	logger.info("Dumping Packages.bin...");
+	size_t i = 0;
+	for (auto iter : pkgsBin)
+	{
+		if (iter.second.decompressedLen == 0)
+			continue;
+		
+		std::filesystem::path curOutPath = (outPath / iter.first.substr(1, iter.first.length() - 1));
+		curOutPath.replace_extension("json");
+		std::filesystem::create_directories(curOutPath.parent_path());
+		std::ofstream outFile;
+		outFile.open (curOutPath);
+		std::string params = pkgsBin.getParametersJson(iter.first).dump(4);
+		outFile.write(params.c_str(), params.length());
+		outFile.close();
+		i++;
+	}
+
+	logger.info("Wrote " + std::to_string(i) + " entries to " + outPath.string());
+	return true;
 }

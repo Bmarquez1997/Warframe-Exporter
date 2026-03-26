@@ -12,6 +12,8 @@ Download the [latest release](https://github.com/Puxtril/Warframe-Exporter/relea
 - `Warframe-Exporter` is the easy-to-use program with a Graphical User Interface.
 - `Warframe-Exporter-CLI` is a Command-Line interface. This is useful for writing scripts to export files.
 
+**Linux: You must be using a distro >= Ubuntu 24.04. More specifically, `glibc` >= 2.39**
+
 # External Libraries
 
 * [LotusLib](https://github.com/Puxtril/LotusLib): Provides an interface for the Warframe files. [See requirements for Oodle](https://github.com/Puxtril/LotusLib#how-to-install).
@@ -44,7 +46,7 @@ For more information on the cache file structure, read the [LotusLib documentati
 
 ## High-level overview
 
-Inside the Cache files Warframe stores on your computer (.toc and .cache), lie all the game's assets. The assets are not stored in standard formats like PNG images or FBX 3D models, they're stored in custom formats. This program reads these custom assets from the cache and converts them into sandard formats. Since it's only reading files from the cache, there is 0 risk of being banned from Warframe. Unless you run this while Warframe is running, then Warframe may detect something is reading the cache files.
+Inside the Cache files Warframe stores on your computer (.toc and .cache), lie all the game's assets. The assets are not stored in standard formats like PNG images or FBX 3D models, they're stored in custom formats. This program reads these custom assets from the cache and converts them into standard formats. Since it's only reading files from the cache, there is 0 risk of being banned from Warframe. Unless you run this while Warframe is running, then Warframe may detect something is reading the cache files.
 
 ## Low-level overview
 

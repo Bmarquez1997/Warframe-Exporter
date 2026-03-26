@@ -46,6 +46,8 @@ UiExporter::setup(UiMainWindow *MainWindow)
     m_previewManager.setupUis(this->Preview, this->verticalLayout_3, this->PreviewButtonsArea, this->horizontalLayout_5);
     m_metadataPreview.setupUis(this->MetadataCommonHeader, this->MetadataCompressedValue, this->MetadataDecompressedValue, this->MetadataModifiedValue);
     m_formatPreview.setupUis(this->Format, this->verticalLayout_6);
+
+    setupShortcuts(MainWindow);
 }
 
 void
@@ -76,32 +78,34 @@ UiExporter::clearPreview()
 void
 UiExporter::setPreview(TreeItemFile* file)
 {
+    LotusLib::FileEntry fileEntry = m_packages->getPackage(file->getPkg()).getFileEntry(file->getQFullpath().toStdString());
+    WarframeExporter::Extractor* extractor = WarframeExporter::g_enumMapExtractor.at(m_packages->getGame(), LotusLib::findPackageCategory(file->getPkg()), fileEntry.commonHeader.type);
+    
     if (this->tabWidget->currentWidget() == this->Preview)
     {
-        LotusLib::FileEntry fileEntry = m_packages.getPackage(file->getPkg()).value().getFile(file->getQFullpath().toStdString());
-        m_previewManager.swapToFilePreview(fileEntry);
+        m_previewManager.swapToFilePreview(fileEntry, extractor);
     }
     else if (this->tabWidget->currentWidget() == this->Metadata)
     {
         m_metadataPreview.clearPreview();
-        m_metadataPreview.setData(&m_packages, file->getPkg(), file->getQFullpath().toStdString());
+        m_metadataPreview.setData(m_packages.value(), m_packagesBin, file->getPkg(), fileEntry);
     }
     else if (this->tabWidget->currentWidget() == this->Format)
     {
         m_formatPreview.clearPreview();
-        m_formatPreview.setData(&m_packages, file->getPkg(), file->getQFullpath().toStdString());
+        m_formatPreview.setData(&m_packages.value(), fileEntry, extractor);
     }
 }
 
 void
-UiExporter::extractDirectory(LotusLib::LotusPath internalPath)
+UiExporter::extractDirectory(std::string internalPath)
 {
     m_exporterDirectoryThread.setInternalPath(internalPath);
     m_exporterDirectoryThread.start();
 }
 
 void
-UiExporter::extractFile(LotusLib::LotusPath internalPath, const std::string& pkgName)
+UiExporter::extractFile(std::string internalPath, const std::string& pkgName)
 {
     m_exporterFileThread.setFileData(internalPath, pkgName);
     m_exporterFileThread.start();
@@ -135,6 +139,12 @@ UiExporter::itemChanged()
 {
     QTreeWidgetItem* item = this->treeWidget->currentItem();
 
+    if (item == nullptr)
+    {
+        this->clearPreview();
+        return;
+    }
+
     int itemType = item->type();
     
     if (itemType == TreeItemDirectory::QTreeWidgetItemType)
@@ -158,18 +168,21 @@ UiExporter::setData(
         WarframeExporter::ExtractOptions options
 )
 {
-    m_packages.setData(cachePath, game);
+    m_packages = LotusLib::PackageCollection(cachePath, game);
     m_cacheDirPath = cachePath;
     m_exportPath = exportPath / "Extracted";
     m_extractTypes = extractTypes;
-    m_exporterDirectoryThread.setData(&m_packages, exportPath, extractTypes, options);
-    m_exporterFileThread.setData(&m_packages, exportPath, options);
-    m_previewManager.setData(&m_packages);
+    m_exporterDirectoryThread.setData(&m_packages.value(), &m_packagesBin, exportPath, extractTypes, options);
+    m_exporterFileThread.setData(&m_packages.value(), &m_packagesBin, exportPath, extractTypes, options);
 
-    m_loading.initProgressBar(m_packages, extractTypes);
+	auto pkgsBinData = m_packages->getFile("Misc", LotusLib::PkgSplitType::HEADER, "/Packages.bin");
+	m_packagesBin.initilize(pkgsBinData);
+    m_previewManager.setData(&m_packages.value(), &m_packagesBin);
+
+    m_loading.initProgressBar(m_packages.value(), extractTypes);
     m_loadingDialog.show();
 
-    m_loadTreeThread.setData(m_extractTypes, m_packages, this->treeWidget, options.filterUiFiles);
+    m_loadTreeThread.setData(m_extractTypes, m_packages.value(), this->treeWidget, options.filterUiFiles);
     m_loadTreeThread.start();
 }
 
@@ -203,15 +216,14 @@ UiExporter::extractButtonClicked()
     if (itemType == TreeItemDirectory::QTreeWidgetItemType)
     {
         TreeItemDirectory* itemCasted = static_cast<TreeItemDirectory*>(selectedItem);
-        LotusLib::LotusPath internalPath = itemCasted->getFullInternalPath();
-        this->extractDirectory(internalPath);
+        this->extractDirectory(LotusLib::getFullPath(*itemCasted->getNode()));
         swapToCancelButton();
     }
 
     else if (itemType == TreeItemFile::QTreeWidgetItemType)
     {
         TreeItemFile* itemCasted = static_cast<TreeItemFile*>(selectedItem);
-        LotusLib::LotusPath internalPath = itemCasted->getQFullpath().toStdString();
+        std::string internalPath = itemCasted->getQFullpath().toStdString();
         this->extractFile(internalPath, itemCasted->getPkg());
         this->ExtractButton->setEnabled(false);
     }
@@ -237,7 +249,6 @@ UiExporter::extractIndexingStarted()
 void
 UiExporter::extractStart(int totalItems)
 {
-    this->ExtractProgressBar->setMinimum(0);
     this->ExtractProgressBar->setMaximum(totalItems);
     this->ExtractProgressBar->setFormat("Extracting %v/%m");
 }
@@ -264,9 +275,10 @@ UiExporter::extractError(std::string msg)
 }
 
 void
-UiExporter::extractComplete()
+UiExporter::extractComplete(int totalItems)
 {
     this->ExtractProgressBar->setFormat("Done %v/%m");\
+    this->ExtractProgressBar->setValue(totalItems);
     swapToExtractButton();
 }
 
@@ -280,7 +292,7 @@ void UiExporter::buildSearchIndex(QTreeWidgetItem* parent)
             text = fileItem->getQFullpath().toLower();
         } else if (item->type() == TreeItemDirectory::QTreeWidgetItemType) {
             TreeItemDirectory* dirItem = static_cast<TreeItemDirectory*>(item);
-            text = QString::fromStdString(dirItem->getFullInternalPath()).toLower();
+            text = QString::fromStdString(LotusLib::getFullPath(*dirItem->getNode())).toLower();
         }
         m_searchIndex.append(qMakePair(text, item));
         buildSearchIndex(item);
@@ -296,7 +308,7 @@ UiExporter::onSearchTextChanged(const QString& text)
 void 
 UiExporter::filterTree() 
 {
-    const QString searchText = searchLineEdit->text().trimmed().toLower();
+    const QString searchText = searchLineEdit->text().trimmed();
     const bool isSearching = !searchText.isEmpty();
 
     if (!isSearching) {
@@ -306,12 +318,24 @@ UiExporter::filterTree()
         return;
     }
 
+    QRegularExpression regex(searchText, QRegularExpression::CaseInsensitiveOption);
+    bool useRegex = regex.isValid();
+
     for (const auto& pair : m_searchIndex) {
         const QString& itemText = pair.first;
         QTreeWidgetItem* item = pair.second;
         item->setHidden(true);
         item->setExpanded(false);
-        if (itemText.contains(searchText)) {
+
+        bool matches = false;
+        if (useRegex) {
+            QRegularExpressionMatch match = regex.match(itemText);
+            matches = match.hasMatch();
+        } else {
+            matches = itemText.contains(searchText.toLower());
+        }
+
+        if (matches) {
             item->setHidden(false);
             QTreeWidgetItem* parent = item->parent();
             while (parent) {
@@ -321,4 +345,70 @@ UiExporter::filterTree()
             }
         }
     }
+}
+
+void
+UiExporter::setupShortcuts(UiMainWindow* MainWindow)
+{
+    // Search shortcuts (Ctrl+F and /)
+    QShortcut* searchShortcut1 = new QShortcut(QKeySequence("Ctrl+F"), MainWindow);
+    QObject::connect(searchShortcut1, &QShortcut::activated, this->searchLineEdit, [this]() {
+        this->searchLineEdit->setFocus();
+        this->searchLineEdit->selectAll();
+    });
+
+    QShortcut* searchShortcut2 = new QShortcut(QKeySequence("/"), MainWindow);
+    QObject::connect(searchShortcut2, &QShortcut::activated, this->searchLineEdit, [this]() {
+        this->searchLineEdit->setFocus();
+        this->searchLineEdit->selectAll();
+    });
+
+    // Focus shortcuts
+    QShortcut* focusTreeShortcut = new QShortcut(QKeySequence("Ctrl+1"), MainWindow);
+    QObject::connect(focusTreeShortcut, &QShortcut::activated, this->treeWidget, [this]() {
+        this->treeWidget->setFocus();
+    });
+
+    QShortcut* focusPreviewShortcut = new QShortcut(QKeySequence("Ctrl+2"), MainWindow);
+    QObject::connect(focusPreviewShortcut, &QShortcut::activated, this->tabWidget, [this]() {
+        this->tabWidget->setCurrentWidget(this->Preview);
+    });
+
+    QShortcut* focusMetadataShortcut = new QShortcut(QKeySequence("Ctrl+3"), MainWindow);
+    QObject::connect(focusMetadataShortcut, &QShortcut::activated, this->tabWidget, [this]() {
+        this->tabWidget->setCurrentWidget(this->Metadata);
+    });
+
+    QShortcut* focusFormatShortcut = new QShortcut(QKeySequence("Ctrl+4"), MainWindow);
+    QObject::connect(focusFormatShortcut, &QShortcut::activated, this->tabWidget, [this]() {
+        this->tabWidget->setCurrentWidget(this->Format);
+    });
+
+    // Extract shortcuts (Space and Enter)
+    QShortcut* extractShortcut1 = new QShortcut(QKeySequence("Space"), MainWindow);
+    QObject::connect(extractShortcut1, &QShortcut::activated, this->ExtractButton, &QPushButton::click);
+
+    QShortcut* extractShortcut2 = new QShortcut(QKeySequence("Return"), MainWindow);
+    QObject::connect(extractShortcut2, &QShortcut::activated, this->ExtractButton, &QPushButton::click);
+
+    // Audio preview play/pause (Shift+Space)
+    QShortcut* audioShortcut = new QShortcut(QKeySequence("Shift+Space"), MainWindow);
+    QObject::connect(audioShortcut, &QShortcut::activated, this, [this]() {
+        m_previewManager.playPauseAudio();
+    });
+
+    // Cycle through tabs (Alt+Left/Right)
+    QShortcut* cycleLeftShortcut = new QShortcut(QKeySequence("Alt+Left"), MainWindow);
+    QObject::connect(cycleLeftShortcut, &QShortcut::activated, this->tabWidget, [this]() {
+        int currentIndex = this->tabWidget->currentIndex();
+        int newIndex = (currentIndex - 1 + this->tabWidget->count()) % this->tabWidget->count();
+        this->tabWidget->setCurrentIndex(newIndex);
+    });
+
+    QShortcut* cycleRightShortcut = new QShortcut(QKeySequence("Alt+Right"), MainWindow);
+    QObject::connect(cycleRightShortcut, &QShortcut::activated, this->tabWidget, [this]() {
+        int currentIndex = this->tabWidget->currentIndex();
+        int newIndex = (currentIndex + 1) % this->tabWidget->count();
+        this->tabWidget->setCurrentIndex(newIndex);
+    });
 }
