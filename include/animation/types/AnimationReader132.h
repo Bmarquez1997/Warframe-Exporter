@@ -27,8 +27,8 @@ namespace WarframeExporter::Animation
 		// When researching channel types, it's helpful to know what animations have many of 1 type
 		void isPureChannelType(uint16_t* channelTypes, int channelCount);
 
-		void readHeader(BinaryReader::BinaryReaderBuffered* headerReader, const LotusLib::CommonHeader& header, AnimationHeaderExternal& outHeader) override;
-		void readBody(BinaryReader::BinaryReaderBuffered* bodyReader, const AnimationHeaderExternal& extHeader, const LotusLib::CommonHeader& header, AnimationBodyExternal& outBody) override;
+		void readHeader(BinaryReader::Buffered* headerReader, const LotusLib::CommonHeader& header, AnimationHeaderExternal& outHeader) override;
+		void readBody(BinaryReader::Buffered* bodyReader, const AnimationHeaderExternal& extHeader, const LotusLib::CommonHeader& header, AnimationBodyExternal& outBody) override;
 
 	protected:
 		/*

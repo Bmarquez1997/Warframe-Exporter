@@ -10,14 +10,14 @@ AnimationExtractor::getInstance()
 }
 
 void
-AnimationExtractor::extract(LotusLib::FileEntry& fileEntry, LotusLib::PackagesReader& pkgs, const std::filesystem::path& outputPath, ExtractOptions options)
+AnimationExtractor::extract(LotusLib::FileEntry& fileEntry, const LotusLib::PackageCollection& pkgs, const LotusLib::PackagesBin& pkgsBin, const std::filesystem::path& outputPath, const ExtractOptions options)
 {
 	AnimationHeaderExternal extHeader;
 	AnimationBodyExternal extBody;
 
 	AnimationReader* reader = g_enumMapAnimation.at(pkgs.getGame(), (int)fileEntry.commonHeader.type);
-	reader->readHeader(&fileEntry.headerData, fileEntry.commonHeader, extHeader);
-	reader->readBody(&fileEntry.bData, extHeader, fileEntry.commonHeader, extBody);
+	reader->readHeader(&fileEntry.header, fileEntry.commonHeader, extHeader);
+	reader->readBody(&fileEntry.body, extHeader, fileEntry.commonHeader, extBody);
 
 	AnimationData combined;
 	AnimationConverter::convertAnimation(extHeader, extBody, combined);

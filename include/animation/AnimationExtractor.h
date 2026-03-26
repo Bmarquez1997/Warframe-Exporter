@@ -1,11 +1,11 @@
 #pragma once
 
 #include "Extractor.h"
-#include "AnimationStructs.hpp"
-#include "AnimationReader.h"
-#include "AnimationConverter.h"
-#include "AnimationExporterGltf.h"
-#include "AnimationEnumMap.h"
+#include "animation/AnimationStructs.hpp"
+#include "animation/AnimationReader.h"
+#include "animation/AnimationConverter.h"
+#include "animation/AnimationExporterGltf.h"
+#include "animation/AnimationEnumMap.h"
 
 namespace WarframeExporter::Animation
 {
@@ -19,7 +19,7 @@ namespace WarframeExporter::Animation
 		AnimationExtractor(const AnimationExtractor&) = delete;
 		AnimationExtractor operator=(const AnimationExtractor&) = delete;
 
-		inline const std::string& getOutputExtension(const LotusLib::CommonHeader& commonHeader, BinaryReader::BinaryReaderBuffered* hReader, WarframeExporter::ExtractOptions options) const override
+		inline const std::string& getOutputExtension(const LotusLib::CommonHeader& commonHeader, BinaryReader::Buffered* hReader, WarframeExporter::ExtractOptions options) const override
 		{
 			static std::string outFileExt = "glb";
 			return outFileExt;
@@ -52,6 +52,6 @@ namespace WarframeExporter::Animation
 
 		static AnimationExtractor* getInstance();
 
-		void extract(LotusLib::FileEntry& fileEntry, LotusLib::PackagesReader& pkgs, const std::filesystem::path& outputPath, ExtractOptions options) override;
+		void extract(LotusLib::FileEntry& fileEntry, const LotusLib::PackageCollection& pkgs, const LotusLib::PackagesBin& pkgsBin, const std::filesystem::path& outputPath, const ExtractOptions options) override;
 	};
 }

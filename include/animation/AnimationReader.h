@@ -1,7 +1,7 @@
 #pragma once
 
-#include "BinaryReaderBuffered.h"
-#include "CommonHeader.h"
+#include "BinaryReader/Buffered.h"
+#include "LotusLib/CommonHeader.h"
 #include "ExporterExceptions.h"
 #include "AnimationStructs.hpp"
 #include "glm/vec3.hpp"
@@ -28,7 +28,7 @@ namespace WarframeExporter::Animation
 		AnimationReader() = default;
 		
 	public:
-		virtual void readHeader(BinaryReader::BinaryReaderBuffered* headerReader, const LotusLib::CommonHeader& header, AnimationHeaderExternal& outHeader) = 0;
-		virtual void readBody(BinaryReader::BinaryReaderBuffered* bodyReader, const AnimationHeaderExternal& extHeader, const LotusLib::CommonHeader& header, AnimationBodyExternal& outBody) = 0;
+		virtual void readHeader(BinaryReader::Buffered* headerReader, const LotusLib::CommonHeader& header, AnimationHeaderExternal& outHeader) = 0;
+		virtual void readBody(BinaryReader::Buffered* bodyReader, const AnimationHeaderExternal& extHeader, const LotusLib::CommonHeader& header, AnimationBodyExternal& outBody) = 0;
 	};
 }

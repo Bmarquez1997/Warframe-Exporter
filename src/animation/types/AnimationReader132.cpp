@@ -3,7 +3,7 @@
 using namespace WarframeExporter::Animation;
 
 void
-AnimationReader132::readHeader(BinaryReader::BinaryReaderBuffered* headerReader, const LotusLib::CommonHeader& header, AnimationHeaderExternal& outHeader)
+AnimationReader132::readHeader(BinaryReader::Buffered* headerReader, const LotusLib::CommonHeader& header, AnimationHeaderExternal& outHeader)
 {
 	uint32_t pathLen1 = headerReader->readUInt32();
 	headerReader->seek(pathLen1, std::ios_base::cur);
@@ -103,7 +103,7 @@ AnimationReader132::isPureChannelType(uint16_t* channelTypes, int channelCount)
 }
 
 void
-AnimationReader132::readBody(BinaryReader::BinaryReaderBuffered* bodyReader, const AnimationHeaderExternal& extHeader, const LotusLib::CommonHeader& header, AnimationBodyExternal& outBody)
+AnimationReader132::readBody(BinaryReader::Buffered* bodyReader, const AnimationHeaderExternal& extHeader, const LotusLib::CommonHeader& header, AnimationBodyExternal& outBody)
 {
 	outBody.actions.resize(extHeader.skeletons.size());
 	for (uint32_t x = 0; x < extHeader.skeletons.size(); x++)
