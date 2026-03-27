@@ -21,6 +21,7 @@ class UiSettings : public QObject
 
     static const inline QString m_checkboxExportTextures = "load/export/textures";
     static const inline QString m_checkboxExportModels = "load/export/models";
+    static const inline QString m_checkboxExportAnimations = "load/export/animations";
     static const inline QString m_checkboxExportLevels = "load/export/levels";
     static const inline QString m_checkboxExportMaterials = "load/export/materials";
     static const inline QString m_checkboxExportAudio = "load/export/audio";
@@ -53,6 +54,7 @@ public:
 
     bool getExportTextures() const;
     bool getExportModels() const;
+    bool getExportAnimations() const;
     bool getExportLevels() const;
     bool getExportMaterials() const;
     bool getExportAudio() const;

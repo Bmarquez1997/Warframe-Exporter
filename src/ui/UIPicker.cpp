@@ -77,6 +77,7 @@ UiPicker::loadSettings()
 
     this->TextureCheckbox->setCheckState(settings.getExportTextures() ? Qt::Checked : Qt::Unchecked);
     this->ModelCheckbox->setCheckState(settings.getExportModels() ? Qt::Checked : Qt::Unchecked);
+    this->AnimationCheckbox->setCheckState(settings.getExportAnimations() ? Qt::Checked : Qt::Unchecked);
     this->LevelCheckbox->setCheckState(settings.getExportLevels() ? Qt::Checked : Qt::Unchecked);
     this->MaterialCheckbox->setCheckState(settings.getExportMaterials() ? Qt::Checked : Qt::Unchecked);
     this->AudioCheckbox->setCheckState(settings.getExportAudio() ? Qt::Checked : Qt::Unchecked);
@@ -217,6 +218,8 @@ UiPicker::parsePickerOptions()
         exportTypes |= (int)WarframeExporter::ExtractorType::Texture | (int)WarframeExporter::ExtractorType::Icon;
     if (this->ShaderCheckbox->isChecked())
         exportTypes |= (int)WarframeExporter::ExtractorType::Shader;
+    if (this->AnimationCheckbox->isChecked())
+        exportTypes |= (int)WarframeExporter::ExtractorType::Animation;
 
     if (exportTypes == 0)
     {

@@ -37,6 +37,12 @@ UiSettings::getExportModels() const
 }
 
 bool
+UiSettings::getExportAnimations() const
+{
+    return m_settings.value(m_checkboxExportAnimations).toBool();
+}
+
+bool
 UiSettings::getExportLevels() const
 {
     return m_settings.value(m_checkboxExportLevels).toBool();
