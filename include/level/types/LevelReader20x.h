@@ -30,7 +30,7 @@ namespace WarframeExporter::Level
 				(int)LevelType::LEVEL_201,
 				(int)LevelType::LEVEL_202,
 				(int)LevelType::LEVEL_207,
-				(int)LevelType::LEVEL_209
+				(int)LevelType::LEVEL_209,
 			};
 			return extTypes;
 		}
