@@ -11,6 +11,6 @@ namespace WarframeExporter::Shader
         SHADER_24 = 24,
         SHADER_25 = 25,
         SHADER_26 = 26,
-        SHADER_29 = 29
+        SHADER_29 = 29,
     };
 };

@@ -55,14 +55,13 @@ namespace WarframeExporter::Material
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_205 },
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_206 },
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_208 },
-				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_209 },
 				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_208 },
+				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_209 },
 				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_210 },
-				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_211 },
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_214 },
 				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_216 },
-				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_217 },
-				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_216 }
+				{ LotusLib::Game::SOULFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_216 },
+				{ LotusLib::Game::WARFRAME, LotusLib::PackageCategory::MISC, (int)MaterialType::MATERIAL_217 }
 			};
 			return extTypes;
 		}
