@@ -10,7 +10,14 @@
 
 
 namespace WarframeExporter::Animation
-{		
+{
+	// Local TR from a base rig model (after model convert + mirrorX), keyed by bone name.
+	struct BaseSkeletonBoneRest
+	{
+		glm::vec3 position{};
+		glm::quat rotation{};
+	};
+
 	struct BoneTreeNodeExternal
 	{
 		std::string name;
